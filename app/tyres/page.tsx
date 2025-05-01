@@ -1,13 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import Image from "next/image";
 import FilterSelect from "@/components/shared/filterSelect";
+import TyreCard from "@/components/shared/tyreCard";
 
 export default function TruckTiresPage() {
   const tires = Array(9).fill({
     id: 1,
-    model: "DRC D721 315/80 R22.5",
+    name: "DRC D721 315/80 R22.5",
     image: "/images/tyre1.png",
     width: "315",
     height: "80",
@@ -62,25 +61,7 @@ export default function TruckTiresPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {tires.map((tire, index) => (
-          <Card key={index} className="overflow-hidden border border-gray-200">
-            <CardContent className="p-6 flex flex-col items-center">
-              <div className="w-full h-48 relative mb-4">
-                <Image
-                  width={100}
-                  height={100}
-                  src={tire.image}
-                  alt={tire.model}
-                  className="w-full h-full object-contain"
-                />
-              </div>
-              <h3 className="text-lg font-bold text-center">{tire.model}</h3>
-            </CardContent>
-            <CardFooter className="flex justify-center px-24">
-              <Button className="w-full rounded-lg py-2 bg-red-700 hover:bg-red-800 text-white">
-                ПОДРОБНЕЕ О МОДЕЛИ
-              </Button>
-            </CardFooter>
-          </Card>
+          <TyreCard key={index} model={tire} />
         ))}
       </div>
 

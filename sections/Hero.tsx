@@ -5,7 +5,7 @@ export default function Hero() {
     <section className="relative w-full h-[400px] md:h-[500px] lg:h-[600px] overflow-hidden">
       <Image
         src="/images/banner.png"
-        alt="Truck tire background"
+        alt="Truck tire"
         layout="fill"
         objectFit="cover"
         priority

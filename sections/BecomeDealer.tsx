@@ -15,7 +15,7 @@ export default function BecomeDealer() {
           </p>
         </div>
         <Link
-          href="/dealer-form"
+          href="/dealership"
           className="inline-block bg-[#A92F2F] text-white font-bold text-sm rounded-full px-10 py-4 transition hover:bg-[#8c2626]"
         >
           ПОДРОБНЕЕ

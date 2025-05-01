@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Heart, Plus, Minus } from "lucide-react";
@@ -11,8 +12,7 @@ export default function TireProductDetail() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [orderCount, setOrderCount] = useState(0);
 
-  // Product specifications
-  const productSpecs = [
+  const products = [
     { label: "Размер", value: "315/80R22.5" },
     { label: "Индекс нагрузки", value: "156/153" },
     { label: "Индекс скорости", value: "M" },
@@ -47,7 +47,7 @@ export default function TireProductDetail() {
       <div className="mb-8">
         <Button
           variant="ghost"
-          className="flex items-center text-black hover:bg-gray-100"
+          className="flex items-center cursor-pointer text-black hover:bg-gray-100"
         >
           <ChevronLeft className="mr-1 h-4 w-4" />
           Назад
@@ -74,7 +74,7 @@ export default function TireProductDetail() {
           <div className="flex justify-end items-center mb-6 w-full">
             <Button
               variant="outline"
-              className={`rounded-full p-2 ${
+              className={`rounded-full cursor-pointer p-2 ${
                 isFavorite ? "bg-gray-100" : "bg-gray-100"
               }`}
               onClick={toggleFavorite}
@@ -93,10 +93,10 @@ export default function TireProductDetail() {
           </div>
 
           <div className="mb-8 max-w-lg">
-            {productSpecs.map((spec, index) => (
+            {products.map((product, index) => (
               <div key={index} className="flex justify-between py-3">
-                <p className="text-gray-700">{spec.label}</p>
-                <p className="font-medium">{spec.value}</p>
+                <p className="text-gray-700">{product.label}</p>
+                <p className="font-medium">{product.value}</p>
               </div>
             ))}
           </div>

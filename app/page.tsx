@@ -6,7 +6,6 @@ import Hero from "@/sections/Hero";
 import PopularModels from "@/sections/PopularModels";
 
 export default function Home() {
-  // grid grid-rows-[100px_1fr_30px]
   return (
     <div className=" min-h-screen">
       <Hero />

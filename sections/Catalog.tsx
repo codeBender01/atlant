@@ -34,16 +34,17 @@ export default function Catalog() {
             href={category.href}
             className="flex py-10 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden hover:shadow-md transition"
           >
-            <div className="relative w-1/2 h-40">
+            <div className="w-1/2 h-64">
               <Image
                 src={category.image}
                 alt={category.title}
-                fill
-                className="object-contain"
+                width={400}
+                height={400}
+                className="object-contain h-full"
               />
             </div>
             <div className="p-4 text-center flex items-center">
-              <h3 className="font-semibold text-lg">{category.title}</h3>
+              <h3 className="font-semibold text-2xl">{category.title}</h3>
             </div>
           </Link>
         ))}
