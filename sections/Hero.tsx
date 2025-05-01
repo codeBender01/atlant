@@ -11,10 +11,10 @@ export default function Hero() {
         priority
       />
 
-      <div className="absolute inset-0 bg-black/40 flex items-center mx-auto  text-center px-4">
-        <h1 className="text-white text-2xl md:text-4xl font-bold leading-tight">
+      <div className="absolute inset-0 bg-black/40 flex mx-auto  items-center text-center ">
+        <p className="text-white text-4xl md:text-4xl font-bold ">
           Грузовые шины и диски <br /> под ваши задачи
-        </h1>
+        </p>
       </div>
     </section>
   );

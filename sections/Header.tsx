@@ -1,9 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
+import ProfileAvatar from "@/components/shared/profileAvatar";
 
 const navLinks = [
   { name: "Главная", href: "/" },
-  { name: "Каталог", href: "/catalog" },
+  { name: "Каталог", href: "/tyres" },
   { name: "Дилерство", href: "/dealership" },
   { name: "Контакты", href: "/contacts" },
 ];
@@ -18,6 +19,7 @@ export default function Header() {
               src="/images/atlant-trade-logo.png"
               alt="ATLANTTRADE Logo"
               width={120}
+              className="cursor-pointer"
               height={120}
             />
           </div>
@@ -35,10 +37,7 @@ export default function Header() {
           ))}
         </nav>
 
-        <div
-          className="w-6 h-6 bg-gray-300 rounded-full"
-          title="Language switch placeholder"
-        ></div>
+        <ProfileAvatar />
       </div>
     </header>
   );

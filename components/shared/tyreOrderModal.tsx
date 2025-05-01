@@ -99,7 +99,7 @@ const QuantitySelector = ({
   );
 };
 
-const TireCard = ({
+const ProductCard = ({
   tire,
   selectedQuantities,
   setSelectedQuantities,
@@ -238,12 +238,11 @@ export default function TireOrderModal({
 
         <StepIndicator currentStep={step} />
 
-        {/* Step 1: Select tires */}
         {step === 1 && (
           <div className="mt-4">
             <div className="grid grid-cols-3 gap-4 mb-6">
               {tires.map((tire) => (
-                <TireCard
+                <ProductCard
                   key={tire.id}
                   tire={tire}
                   selectedQuantities={selectedQuantities}
@@ -265,7 +264,6 @@ export default function TireOrderModal({
           </div>
         )}
 
-        {/* Step 2: Contact information */}
         {step === 2 && (
           <div className="mt-4">
             <div className="grid grid-cols-1 gap-4 mb-6">
@@ -317,7 +315,6 @@ export default function TireOrderModal({
           </div>
         )}
 
-        {/* Step 3: Order summary */}
         {step === 3 && (
           <div className="mt-4">
             <div className="mb-6">
