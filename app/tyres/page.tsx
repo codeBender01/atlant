@@ -8,9 +8,6 @@ export default function TruckTiresPage() {
     id: 1,
     name: "DRC D721 315/80 R22.5",
     image: "/images/tyre1.png",
-    width: "315",
-    height: "80",
-    diameter: "R22.5",
   });
 
   return (
