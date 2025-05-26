@@ -1,24 +1,26 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 
 const categories = [
   {
     id: 1,
-    title: "Грузовые шины",
+    title: "Зимние шины",
     image: "/images/tyre2.png",
-    href: "/catalog/truck-tires",
+    href: "/tyres",
   },
   {
     id: 2,
-    title: "Шины для спецтехники",
+    title: "Летние шины",
     image: "/images/shina.png",
-    href: "/catalog/special-tires",
+    href: "/tyres",
   },
   {
     id: 3,
-    title: "Грузовые диски",
-    image: "/images/diska.png",
-    href: "/catalog/truck-discs",
+    title: "На все сезоны",
+    image: "/images/tyre1.png",
+    href: "/tyres",
   },
 ];
 

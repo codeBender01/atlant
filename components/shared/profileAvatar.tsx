@@ -1,4 +1,4 @@
-import React from "react";
+import React, { FC } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import {
   DropdownMenu,
@@ -7,8 +7,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import { User } from "@/app/types";
 
-const ProfileAvatar = () => {
+import { useRouter } from "next/navigation";
+
+interface ProfileProps {
+  user?: User;
+}
+
+const ProfileAvatar: FC<ProfileProps> = ({ user }) => {
+  const router = useRouter();
+
   return (
     <>
       <DropdownMenu>
@@ -20,12 +29,18 @@ const ProfileAvatar = () => {
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56">
           <DropdownMenuLabel className="font-bold">
-            Геннадий Тарханян
+            {user && user.name
+              ? user.name
+              : user && user.email
+              ? user.email
+              : ""}
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuLabel>Избранное</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuLabel>Настройки профиля</DropdownMenuLabel>
+          <DropdownMenuLabel onClick={() => router.push("/profile")}>
+            Настройки профиля
+          </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuLabel className="font-bold">Выйти</DropdownMenuLabel>
         </DropdownMenuContent>

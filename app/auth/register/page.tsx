@@ -24,8 +24,11 @@ export default function AuthRegisterPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.post("/api/proxy", { email, password });
-      localStorage.setItem("token", response.data.token);
+      const response = await axios.post("/api/proxy/api/auth/register", {
+        email,
+        password,
+      });
+      localStorage.setItem("atoken", response.data.token);
       if (response.data.token) {
         router.push("/");
       }

@@ -1,14 +1,35 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import FilterSelect from "@/components/shared/filterSelect";
 import TyreCard from "@/components/shared/tyreCard";
 
+import { TyreCard as TyreCardType } from "../types";
+
+import axios from "axios";
+
+import { useEffect, useState } from "react";
+
 export default function TruckTiresPage() {
+  const [tyres, setTyres] = useState<TyreCardType[]>([]);
+
   const tires = Array(9).fill({
     id: 1,
     name: "DRC D721 315/80 R22.5",
     image: "/images/tyre1.png",
   });
+
+  const getCatalog = async () => {
+    const res = await axios.get<TyreCardType[]>("/api/proxy/api/tiers/catalog");
+    return res.data;
+  };
+
+  useEffect(() => {
+    getCatalog().then((res) => {
+      setTyres(res);
+    });
+  }, []);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -57,7 +78,7 @@ export default function TruckTiresPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {tires.map((tire, index) => (
+        {tyres.map((tire, index) => (
           <TyreCard key={index} model={tire} />
         ))}
       </div>
