@@ -27,11 +27,6 @@ export default function Footer() {
             <p className="text-sm">Адрес: г. Москва, ул. Примерная, 123</p>
           </div>
         </div>
-        <div>
-          <p>TEst</p>
-          <p>TEst</p>
-          <p>TEst</p>
-        </div>
       </div>
 
       <div className="mt-10 border-t border-white/20 pt-6 text-center text-sm text-black">

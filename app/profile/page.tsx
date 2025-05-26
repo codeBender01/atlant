@@ -15,9 +15,7 @@ export default function ProfileSettings() {
   };
   const formData = new FormData();
   const [token, setToken] = useState<string | null>(null);
-  const [imagePreview, setImagePreview] = useState(
-    "https://github.com/shadcn.png"
-  );
+  const [imagePreview, setImagePreview] = useState("");
   const [selectedFile, setSelectedFile] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [user, setUser] = useState<User>({
@@ -125,6 +123,7 @@ export default function ProfileSettings() {
           region: res.region ? res.region : "",
           updatedAt: "",
         });
+        setImagePreview(res.avatar);
       }
     });
   }, [token]);

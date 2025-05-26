@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Heart, Plus, Minus } from "lucide-react";
 import Image from "next/image";
-import TireOrderModal from "@/components/shared/tyreOrderModal";
 
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -14,11 +13,13 @@ import { TyreCard } from "@/app/types";
 
 import axios from "axios";
 
+import { useAuth } from "@/shared/hooks/useAuth";
+
 export default function TireProductDetail() {
   const [quantity, setQuantity] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [orderCount, setOrderCount] = useState(0);
+  const [cart, setCart] = useState([]);
   const [price, setPrice] = useState(0);
   const [products, setProducts] = useState([
     { label: "Размер", value: "" },
@@ -32,6 +33,7 @@ export default function TireProductDetail() {
   ]);
 
   const params = useParams();
+  const token = useAuth();
 
   const getOneTier = async () => {
     const res = await axios.get<TyreCard>(`/api/proxy/api/tiers/${params.id}`);
@@ -56,11 +58,9 @@ export default function TireProductDetail() {
 
       toast.success("Добавлено!");
 
-      console.log("Added to cart:", response.data);
       return response.data;
     } catch (error: any) {
-      console.error("Failed to add to cart:", error);
-      toast.error("error");
+      toast.error("Авторизуйтесь для добавления товаров в корзину");
       throw error;
     }
   };
@@ -190,23 +190,6 @@ export default function TireProductDetail() {
             </div>
           </div>
         </div>
-      </div>
-      <TireOrderModal
-        open={isModalOpen}
-        onOpenChange={() => setIsModalOpen(!isModalOpen)}
-      />
-      <div className="fixed bottom-8 right-8">
-        <Button
-          className="bg-black hover:bg-gray-800 text-white rounded-full px-8 py-3 font-medium text-lg"
-          onClick={() => setIsModalOpen(true)}
-        >
-          ЗАЯВКА
-          {orderCount > 0 && (
-            <span className="ml-2 bg-red-600 w-4 h-4 rounded-full flex items-center justify-center text-xs">
-              {orderCount}
-            </span>
-          )}
-        </Button>
       </div>
     </div>
   );

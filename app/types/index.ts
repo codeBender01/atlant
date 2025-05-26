@@ -34,3 +34,18 @@ export interface User {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface Cart {
+  items: {
+    id: number;
+    quantity: number;
+    createdAt: string;
+    updatedAt: string;
+    userId: number;
+    tierId: number;
+    Tier: TyreCard;
+    subtotal: number;
+  }[];
+  total: number;
+  itemCount: number;
+}

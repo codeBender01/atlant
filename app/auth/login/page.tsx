@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-
 import axios from "axios";
 
 export default function AuthLoginPage() {
@@ -29,11 +28,15 @@ export default function AuthLoginPage() {
         password,
       });
       localStorage.setItem("atoken", response.data.token);
+
+      // Dispatch custom event to notify other components
+      window.dispatchEvent(new Event("tokenUpdated"));
+
       if (response.data.token) {
         router.push("/");
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || "Registration failed");
+      setError(err.response?.data?.error || "Login failed");
     } finally {
       setLoading(false);
     }

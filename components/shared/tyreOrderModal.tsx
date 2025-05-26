@@ -11,6 +11,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import axios from "axios";
+import { useAuth } from "@/shared/hooks/useAuth";
+import { Cart, TyreCard } from "@/app/types";
+
+import image from "../../public/images/tyre1.png";
 
 const tires = [
   {
@@ -74,15 +79,28 @@ const QuantitySelector = ({
   setQuantity,
 }: {
   quantity: number;
-  setQuantity: (qty: number) => void;
+  setQuantity: (newQuantity: number) => void;
 }) => {
+  // Add console logs to debug
+
+  const handleDecrease = () => {
+    const newQuantity = Math.max(0, quantity - 1);
+    setQuantity(newQuantity);
+  };
+
+  const handleIncrease = () => {
+    const newQuantity = quantity + 1;
+    setQuantity(newQuantity);
+  };
+
   return (
     <div className="flex items-center gap-2 mt-2">
       <Button
         variant="outline"
         size="sm"
         className="h-8 w-8 p-0"
-        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+        onClick={handleDecrease}
+        type="button" // Add this to prevent form submission
       >
         -
       </Button>
@@ -91,7 +109,8 @@ const QuantitySelector = ({
         variant="outline"
         size="sm"
         className="h-8 w-8 p-0"
-        onClick={() => setQuantity(quantity + 1)}
+        onClick={handleIncrease}
+        type="button" // Add this to prevent form submission
       >
         +
       </Button>
@@ -101,37 +120,75 @@ const QuantitySelector = ({
 
 const ProductCard = ({
   tire,
-  selectedQuantities,
   setSelectedQuantities,
+  image,
+  cart,
 }: {
-  tire: (typeof tires)[0];
-  selectedQuantities: Record<number, number>;
-  setSelectedQuantities: React.Dispatch<
-    React.SetStateAction<Record<number, number>>
-  >;
+  tire: TyreCard;
+  setSelectedQuantities: React.Dispatch<React.SetStateAction<Cart>>;
+  image: string;
+  cart: Cart;
 }) => {
-  const quantity = selectedQuantities[tire.id] || 0;
+  // Find the cart item that matches this tire
+  const cartItem = cart.items.find((item) => item.tierId === tire.id);
 
-  const updateQuantity = (newQuantity: number) => {
-    setSelectedQuantities((prev) => ({
-      ...prev,
-      [tire.id]: newQuantity,
-    }));
+  const updateQuantity = (itemId: number, newQuantity: number) => {
+    console.log(
+      "updateQuantity called with itemId:",
+      itemId,
+      "newQuantity:",
+      newQuantity
+    );
+
+    setSelectedQuantities((prevCart) => {
+      const updatedItems = prevCart.items.map((item) => {
+        if (item.id === itemId) {
+          return {
+            ...item,
+            quantity: newQuantity,
+            subtotal: item.Tier.price * newQuantity,
+          };
+        }
+        return item;
+      });
+
+      const newTotal = updatedItems.reduce(
+        (sum, item) => sum + item.subtotal,
+        0
+      );
+      const newItemCount = updatedItems.reduce(
+        (sum, item) => sum + item.quantity,
+        0
+      );
+
+      const newCart = {
+        items: updatedItems,
+        total: newTotal,
+        itemCount: newItemCount,
+      };
+
+      return newCart;
+    });
   };
+
+  // If there's no cart item for this tire, don't render the component
+  if (!cartItem) {
+    return null;
+  }
 
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm border flex flex-col items-center">
       <div className="w-24 h-24 relative mb-2">
-        <Image
-          src={tire.image}
-          alt={tire.name}
-          fill
-          className="object-contain"
-        />
+        <Image src={image} alt={image} fill className="object-contain" />
       </div>
-      <div className="text-xs text-center font-medium mb-1">{tire.name}</div>
-      <div className="text-xs text-center mb-2">8шт</div>
-      <QuantitySelector quantity={quantity} setQuantity={updateQuantity} />
+      <div className="text-xs text-center font-medium mb-1">{tire.size}</div>
+      <div className="text-xs text-center mb-2">{cartItem.quantity}</div>
+      <QuantitySelector
+        quantity={cartItem.quantity} // Use the cart item's quantity
+        setQuantity={(newQuantity) => {
+          updateQuantity(cartItem.id, newQuantity); // Use the cart item's id
+        }}
+      />
     </div>
   );
 };
@@ -159,11 +216,32 @@ export default function TireOrderModal({
     email: "",
     region: "",
     message: "",
-    city: "Москва",
-    workWithUs: "",
+  });
+  const [cart, setCart] = useState<Cart>({
+    items: [],
+    itemCount: 0,
+    total: 0,
   });
 
+  const token = useAuth();
+
+  const getInCartProducts = async () => {
+    const res = await axios.get<Cart>("/api/proxy/api/order/cart", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return res.data;
+  };
+
   useEffect(() => {
+    getInCartProducts()
+      .then((res) => {
+        setCart(res);
+      })
+      .catch((e) => {
+        console.log(e);
+      });
     if (open && initialTireId) {
       setSelectedQuantities((prev) => ({
         ...prev,
@@ -188,28 +266,34 @@ export default function TireOrderModal({
     }));
   };
 
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     if (step < 3) {
+      if (formData.message === "" && step === 2) {
+        return;
+      }
       setStep(step + 1);
     } else {
-      console.log("Form submitted", { selectedQuantities, formData });
       onOpenChange(false);
 
-      setTimeout(() => {
-        setStep(1);
-        setSelectedQuantities(
-          initialTireId ? { [initialTireId]: initialQuantity } : {}
-        );
-        setFormData({
-          name: "",
-          phone: "",
-          email: "",
-          region: "",
-          message: "",
-          city: "Москва",
-          workWithUs: "",
+      await axios
+        .post("/api/proxy/api/order/order", formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        .then(() => {
+          setTimeout(() => {
+            setStep(1);
+
+            setFormData({
+              name: "",
+              phone: "",
+              email: "",
+              region: "",
+              message: "",
+            });
+          }, 300);
         });
-      }, 300);
     }
   };
 
@@ -241,14 +325,16 @@ export default function TireOrderModal({
         {step === 1 && (
           <div className="mt-4">
             <div className="grid grid-cols-3 gap-4 mb-6">
-              {tires.map((tire) => (
-                <ProductCard
-                  key={tire.id}
-                  tire={tire}
-                  selectedQuantities={selectedQuantities}
-                  setSelectedQuantities={setSelectedQuantities}
-                />
-              ))}
+              {cart &&
+                cart.items.map((tire) => (
+                  <ProductCard
+                    key={tire.id}
+                    tire={tire.Tier}
+                    image={image.src}
+                    setSelectedQuantities={setCart}
+                    cart={cart}
+                  />
+                ))}
             </div>
             <div className="flex justify-between mt-6">
               <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -355,7 +441,6 @@ export default function TireOrderModal({
                     <p className="text-sm mb-2">
                       {formData.name || "Геннадий"}
                     </p>
-                    <p className="text-sm mb-2">{formData.city}</p>
                   </div>
                   <div>
                     <p className="text-sm mb-2">
@@ -369,9 +454,7 @@ export default function TireOrderModal({
                 <div className="mt-4">
                   <p className="text-sm mb-2">Сообщение</p>
                   <div className="border rounded p-4 h-20">
-                    <p className="text-sm">
-                      {formData.workWithUs || "Работаете с нас?"}
-                    </p>
+                    <p className="text-sm">{"Работаете с нас?"}</p>
                   </div>
                 </div>
               </div>

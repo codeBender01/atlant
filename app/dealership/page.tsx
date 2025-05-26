@@ -5,14 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
+import { toast } from "react-toastify";
+
+import { useAuth } from "@/shared/hooks/useAuth";
+
+import axios from "axios";
+
 export default function Dealership() {
   const [formData, setFormData] = useState({
-    companyName: "",
+    company_name: "",
     inn: "",
     region: "",
     email: "",
     message: "",
   });
+
+  const token = useAuth();
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -22,8 +30,22 @@ export default function Dealership() {
   };
 
   const handleSubmit = () => {
-    console.log("Form data submitted:", formData);
-    // Handle form submission logic here
+    const res = axios
+      .post("/api/proxy/api/message", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then(() => {
+        setFormData({
+          company_name: "",
+          inn: "",
+          region: "",
+          email: "",
+          message: "",
+        });
+        toast.success("Отправлено!");
+      });
   };
 
   return (
@@ -87,8 +109,8 @@ export default function Dealership() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <Input
-            name="companyName"
-            value={formData.companyName}
+            name="company_name"
+            value={formData.company_name}
             onChange={handleChange}
             placeholder="Название компании"
             className="bg-gray-100 p-6 rounded-md"

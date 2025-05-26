@@ -76,6 +76,18 @@ async function handleRequest(
       ...(body && { body }),
     });
 
+    // Handle 401 Unauthorized responses
+    if (response.status === 401) {
+      return NextResponse.json(
+        {
+          error: "Unauthorized",
+          message: "Authentication failed",
+          shouldLogout: true,
+        },
+        { status: 401 }
+      );
+    }
+
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
   } catch (error) {

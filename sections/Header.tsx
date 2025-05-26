@@ -3,13 +3,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import ProfileAvatar from "@/components/shared/profileAvatar";
-
 import axios from "axios";
-
 import { useEffect, useState } from "react";
-
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { User } from "@/app/types";
+import { clearAuthData, handleAuthError } from "../app/utils/auth";
 
 const navLinks = [
   { name: "Главная", href: "/" },
@@ -18,35 +17,79 @@ const navLinks = [
   { name: "Контакты", href: "/contacts" },
 ];
 
-export default function Header() {
+// Custom hook for authentication
+function useAuth() {
   const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Get initial token
+    const storedToken = localStorage.getItem("atoken");
+    setToken(storedToken);
+
+    // Listen for storage changes
+    const handleStorageChange = () => {
+      const newToken = localStorage.getItem("atoken");
+      setToken(newToken);
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("tokenUpdated", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("tokenUpdated", handleStorageChange);
+    };
+  }, []);
+
+  return token;
+}
+
+export default function Header() {
+  const token = useAuth();
   const [user, setUser] = useState<any>({});
+  const router = useRouter();
 
   const getUserProfile = async () => {
     if (!token) return;
 
-    const res = await axios.get<User>("/api/proxy/api/profile", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return res.data;
+    try {
+      const res = await axios.get<User>("/api/proxy/api/profile", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return res.data;
+    } catch (error: any) {
+      // Handle 401 or shouldLogout flag
+      if (
+        error.response?.status === 401 ||
+        error.response?.data?.shouldLogout
+      ) {
+        handleAuthError(router);
+      }
+      throw error;
+    }
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("atoken");
-    setToken(token);
-  }, []);
-
-  useEffect(() => {
-    getUserProfile().then((res) => {
-      setUser(res);
-    });
+    if (token) {
+      getUserProfile()
+        .then((res) => {
+          if (res) {
+            setUser(res);
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to fetch user profile:", error);
+        });
+    } else {
+      setUser({});
+    }
   }, [token]);
 
   return (
     <header className="w-full bg-white">
-      <div className="max-w-screen-xl  mx-auto flex items-center justify-between px-4 py-3">
+      <div className="max-w-screen-xl mx-auto flex items-center justify-between px-4 py-3">
         <Link href="/">
           <div className="flex items-center gap-2">
             <Image
@@ -78,7 +121,7 @@ export default function Header() {
             <Link href={"/auth/login"}>
               <Button
                 type="button"
-                className=" cursor-pointer px-6 py-4 bg-black hover:bg-gray-800 text-white font-medium rounded-full"
+                className="cursor-pointer px-6 py-4 bg-black hover:bg-gray-800 text-white font-medium rounded-full"
               >
                 Sign in
               </Button>
@@ -86,7 +129,7 @@ export default function Header() {
             <Link href={"/auth/register"}>
               <Button
                 type="button"
-                className=" cursor-pointer px-6 py-4 bg-white hover:bg-gray-800 border border-black  text-black font-medium rounded-full hover:text-white"
+                className="cursor-pointer px-6 py-4 bg-white hover:bg-gray-800 border border-black text-black font-medium rounded-full hover:text-white"
               >
                 Sign up
               </Button>
