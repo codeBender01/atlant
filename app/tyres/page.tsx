@@ -14,12 +14,6 @@ import { useEffect, useState } from "react";
 export default function TruckTiresPage() {
   const [tyres, setTyres] = useState<TyreCardType[]>([]);
 
-  const tires = Array(9).fill({
-    id: 1,
-    name: "DRC D721 315/80 R22.5",
-    image: "/images/tyre1.png",
-  });
-
   const getCatalog = async () => {
     const res = await axios.get<TyreCardType[]>("/api/proxy/api/tiers/catalog");
     return res.data;

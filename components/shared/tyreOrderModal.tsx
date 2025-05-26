@@ -248,7 +248,7 @@ export default function TireOrderModal({
         [initialTireId]: initialQuantity,
       }));
     }
-  }, [open, initialTireId, initialQuantity]);
+  }, [open, initialTireId, initialQuantity, token]);
 
   useEffect(() => {
     if (!open) {

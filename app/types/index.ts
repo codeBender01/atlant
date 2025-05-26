@@ -49,3 +49,12 @@ export interface Cart {
   total: number;
   itemCount: number;
 }
+
+export interface Liked {
+  userId: number;
+  tierId: number;
+  createdAt: string;
+  updatedAt: string;
+  Tier: TyreCard;
+}
+[];

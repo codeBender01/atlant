@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { User } from "@/app/types";
-import { clearAuthData, handleAuthError } from "../app/utils/auth";
+import { handleAuthError } from "../app/utils/auth";
 
 const navLinks = [
   { name: "Главная", href: "/" },
@@ -17,16 +17,13 @@ const navLinks = [
   { name: "Контакты", href: "/contacts" },
 ];
 
-// Custom hook for authentication
 function useAuth() {
   const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
-    // Get initial token
     const storedToken = localStorage.getItem("atoken");
     setToken(storedToken);
 
-    // Listen for storage changes
     const handleStorageChange = () => {
       const newToken = localStorage.getItem("atoken");
       setToken(newToken);
@@ -60,7 +57,6 @@ export default function Header() {
       });
       return res.data;
     } catch (error: any) {
-      // Handle 401 or shouldLogout flag
       if (
         error.response?.status === 401 ||
         error.response?.data?.shouldLogout

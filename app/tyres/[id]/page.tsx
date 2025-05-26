@@ -18,8 +18,6 @@ import { useAuth } from "@/shared/hooks/useAuth";
 export default function TireProductDetail() {
   const [quantity, setQuantity] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [orderCount, setOrderCount] = useState(0);
-  const [cart, setCart] = useState([]);
   const [price, setPrice] = useState(0);
   const [products, setProducts] = useState([
     { label: "Размер", value: "" },
@@ -65,6 +63,29 @@ export default function TireProductDetail() {
     }
   };
 
+  const handleAddToFavorites = async () => {
+    setIsFavorite(!isFavorite);
+    const res = await axios
+      .post(
+        "/api/proxy/api/liked",
+        {
+          tierId: params.id,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+      .then(() => {
+        toast.success("Добавлено!");
+      })
+      .catch((e) => {
+        toast.error("Авторизуйтесь для добавления товаров в корзину");
+        throw e;
+      });
+  };
+
   useEffect(() => {
     getOneTier().then((res) => {
       setPrice(res.price);
@@ -94,10 +115,6 @@ export default function TireProductDetail() {
     setQuantity(quantity + 1);
   };
 
-  const toggleFavorite = () => {
-    setIsFavorite(!isFavorite);
-  };
-
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="mb-8">
@@ -113,7 +130,7 @@ export default function TireProductDetail() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="flex flex-col gap-12 items-center justify-center">
           <h1 className="text-3xl md:text-4xl font-bold">
-            DRC D721 315/80 R22.5
+            {products[0].value}
           </h1>
           <div className="w-full max-w-lg">
             <Image
@@ -133,7 +150,7 @@ export default function TireProductDetail() {
               className={`rounded-full cursor-pointer p-2 ${
                 isFavorite ? "bg-gray-100" : "bg-gray-100"
               }`}
-              onClick={toggleFavorite}
+              onClick={handleAddToFavorites}
             >
               <Heart
                 className={`h-6 w-6 ${

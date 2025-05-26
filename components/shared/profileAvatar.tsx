@@ -1,3 +1,5 @@
+"use client";
+
 import React, { FC } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import {
@@ -10,6 +12,7 @@ import {
 import { User } from "@/app/types";
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface ProfileProps {
   user?: User;
@@ -17,13 +20,35 @@ interface ProfileProps {
 
 const ProfileAvatar: FC<ProfileProps> = ({ user }) => {
   const router = useRouter();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  console.log(user);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+
+    try {
+      localStorage.removeItem("atoken");
+
+      window.dispatchEvent(new Event("tokenUpdated"));
+
+      router.push("/auth/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      localStorage.removeItem("atoken");
+      window.dispatchEvent(new Event("tokenUpdated"));
+      router.push("/auth/login");
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Avatar>
-            <AvatarImage src="https://github.com/shadcn.png" />
+            <AvatarImage src={user?.avatar ? user.avatar : ""} />
             <AvatarFallback>CN</AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>
@@ -36,13 +61,17 @@ const ProfileAvatar: FC<ProfileProps> = ({ user }) => {
               : ""}
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuLabel>Избранное</DropdownMenuLabel>
+          <DropdownMenuLabel onClick={() => router.push("/favorite")}>
+            Избранное
+          </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuLabel onClick={() => router.push("/profile")}>
             Настройки профиля
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuLabel className="font-bold">Выйти</DropdownMenuLabel>
+          <DropdownMenuLabel className="font-bold" onClick={handleLogout}>
+            Выйти
+          </DropdownMenuLabel>
         </DropdownMenuContent>
       </DropdownMenu>
     </>
