@@ -27,13 +27,17 @@ export default function AuthLoginPage() {
         email,
         password,
       });
-      localStorage.setItem("atoken", response.data.token);
-
-      // Dispatch custom event to notify other components
-      window.dispatchEvent(new Event("tokenUpdated"));
 
       if (response.data.token) {
-        router.push("/");
+        localStorage.setItem("atoken", response.data.token);
+
+        // Dispatch custom event to notify other components
+        window.dispatchEvent(new Event("tokenUpdated"));
+
+        // Small delay to ensure the event is processed
+        setTimeout(() => {
+          router.push("/");
+        }, 100);
       }
     } catch (err: any) {
       setError(err.response?.data?.error || "Login failed");

@@ -34,23 +34,50 @@ export default function RootLayout({
 }>) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [orderCount, setOrderCount] = useState(0);
-
-  const token = useAuth();
+  const { token } = useAuth();
 
   const getInCartProducts = async () => {
-    const res = await axios.get<Cart>("/api/proxy/api/order/cart", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return res.data;
+    if (!token) return { items: [] };
+
+    try {
+      const res = await axios.get<Cart>("/api/proxy/api/order/cart", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return res.data;
+    } catch (error) {
+      console.error("Failed to fetch cart:", error);
+      return { items: [] };
+    }
+  };
+
+  const updateCartCount = async () => {
+    const cartData = await getInCartProducts();
+    setOrderCount(cartData.items.length);
   };
 
   useEffect(() => {
-    getInCartProducts().then((res) => {
-      setOrderCount(res.items.length);
-    });
+    if (token) {
+      updateCartCount();
+    } else {
+      setOrderCount(0);
+    }
   }, [token]);
+
+  // Listen for cart updates
+
+  useEffect(() => {
+    const handleCartUpdate = () => {
+      setIsModalOpen(true);
+    };
+
+    window.addEventListener("cartUpdated", handleCartUpdate);
+
+    return () => {
+      window.removeEventListener("cartUpdated", handleCartUpdate);
+    };
+  }, []);
 
   return (
     <html lang="en">

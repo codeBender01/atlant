@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { User } from "@/app/types";
 import { handleAuthError } from "../app/utils/auth";
+import { useAuth } from "@/shared/hooks/useAuth"; // Import your useAuth hook
 
 const navLinks = [
   { name: "Главная", href: "/" },
@@ -17,39 +18,17 @@ const navLinks = [
   { name: "Контакты", href: "/contacts" },
 ];
 
-function useAuth() {
-  const [token, setToken] = useState<string | null>(null);
-
-  useEffect(() => {
-    const storedToken = localStorage.getItem("atoken");
-    setToken(storedToken);
-
-    const handleStorageChange = () => {
-      const newToken = localStorage.getItem("atoken");
-      setToken(newToken);
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-    window.addEventListener("tokenUpdated", handleStorageChange);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener("tokenUpdated", handleStorageChange);
-    };
-  }, []);
-
-  return token;
-}
-
 export default function Header() {
-  const token = useAuth();
+  const { token, isInitialized } = useAuth(); // Use the improved hook
   const [user, setUser] = useState<any>({});
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const getUserProfile = async () => {
-    if (!token) return;
+    if (!token) return null;
 
     try {
+      setIsLoading(true);
       const res = await axios.get<User>("/api/proxy/api/profile", {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -64,11 +43,14 @@ export default function Header() {
         handleAuthError(router);
       }
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    if (token) {
+    // Only fetch user profile after auth is initialized and token exists
+    if (isInitialized && token) {
       getUserProfile()
         .then((res) => {
           if (res) {
@@ -78,10 +60,10 @@ export default function Header() {
         .catch((error) => {
           console.error("Failed to fetch user profile:", error);
         });
-    } else {
+    } else if (isInitialized && !token) {
       setUser({});
     }
-  }, [token]);
+  }, [token, isInitialized]);
 
   return (
     <header className="w-full bg-white">

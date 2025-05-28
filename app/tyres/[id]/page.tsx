@@ -16,7 +16,7 @@ import axios from "axios";
 import { useAuth } from "@/shared/hooks/useAuth";
 
 export default function TireProductDetail() {
-  const [quantity, setQuantity] = useState(0);
+  const [quantity, setQuantity] = useState(1); // Changed default to 1
   const [isFavorite, setIsFavorite] = useState(false);
   const [price, setPrice] = useState(0);
   const [products, setProducts] = useState([
@@ -31,7 +31,7 @@ export default function TireProductDetail() {
   ]);
 
   const params = useParams();
-  const token = useAuth();
+  const { token } = useAuth(); // Use destructured token
 
   const getOneTier = async () => {
     const res = await axios.get<TyreCard>(`/api/proxy/api/tiers/${params.id}`);
@@ -39,8 +39,12 @@ export default function TireProductDetail() {
   };
 
   const addToCart = async () => {
+    if (quantity === 0) {
+      toast.error("Выберите количество товара");
+      return;
+    }
+
     try {
-      const token = localStorage.getItem("atoken");
       const response = await axios.post(
         "/api/proxy/api/order/cart",
         {
@@ -54,7 +58,10 @@ export default function TireProductDetail() {
         }
       );
 
-      toast.success("Добавлено!");
+      toast.success("Добавлено в корзину!");
+
+      // Dispatch cart update event
+      window.dispatchEvent(new Event("cartUpdated"));
 
       return response.data;
     } catch (error: any) {
@@ -64,9 +71,14 @@ export default function TireProductDetail() {
   };
 
   const handleAddToFavorites = async () => {
-    setIsFavorite(!isFavorite);
-    const res = await axios
-      .post(
+    if (!token) {
+      toast.error("Авторизуйтесь для добавления в избранное");
+      return;
+    }
+
+    try {
+      setIsFavorite(!isFavorite);
+      await axios.post(
         "/api/proxy/api/liked",
         {
           tierId: params.id,
@@ -76,14 +88,12 @@ export default function TireProductDetail() {
             Authorization: `Bearer ${token}`,
           },
         }
-      )
-      .then(() => {
-        toast.success("Добавлено!");
-      })
-      .catch((e) => {
-        toast.error("Авторизуйтесь для добавления товаров в корзину");
-        throw e;
-      });
+      );
+      toast.success("Добавлено в избранное!");
+    } catch (error) {
+      setIsFavorite(isFavorite); // Revert on error
+      toast.error("Ошибка при добавлении в избранное");
+    }
   };
 
   useEffect(() => {
@@ -178,6 +188,7 @@ export default function TireProductDetail() {
             <Button
               className="w-full rounded-full sm:w-auto bg-red-700 hover:bg-red-800 text-white font-medium py-6 px-16"
               onClick={addToCart}
+              disabled={!token || quantity === 0}
             >
               ДОБАВИТЬ В ЗАЯВКУ
             </Button>
@@ -187,6 +198,7 @@ export default function TireProductDetail() {
                 variant="outline"
                 className="h-12 w-12 rounded-full border-2 border-gray-300"
                 onClick={handleDecrease}
+                disabled={quantity <= 1}
               >
                 <Minus className="h-4 w-4" />
               </Button>

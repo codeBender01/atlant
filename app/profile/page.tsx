@@ -159,14 +159,6 @@ export default function ProfileSettings() {
           >
             ЗАГРУЗИТЬ ФОТО
           </Button>
-
-          <Button
-            onClick={handleDeletePhoto}
-            variant="destructive"
-            className="w-full bg-red-700 hover:bg-red-800 text-white font-medium py-3"
-          >
-            УДАЛИТЬ ФОТО
-          </Button>
         </div>
 
         <div className="flex-1">
@@ -256,14 +248,6 @@ export default function ProfileSettings() {
           </div>
 
           <div className="flex justify-end gap-4">
-            <Button
-              onClick={() => console.log("Cancel")}
-              variant="outline"
-              className="px-12 py-6 border-2 border-gray-300 rounded-full font-medium"
-            >
-              ОТМЕНА
-            </Button>
-
             <Button
               onClick={handleSave}
               className="px-12 py-6 bg-black hover:bg-gray-800 text-white font-medium rounded-full"

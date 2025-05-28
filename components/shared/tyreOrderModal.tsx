@@ -223,32 +223,58 @@ export default function TireOrderModal({
     total: 0,
   });
 
-  const token = useAuth();
+  const { token } = useAuth(); // Use destructured token
 
   const getInCartProducts = async () => {
-    const res = await axios.get<Cart>("/api/proxy/api/order/cart", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return res.data;
+    if (!token) return { items: [], itemCount: 0, total: 0 };
+
+    try {
+      const res = await axios.get<Cart>("/api/proxy/api/order/cart", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return res.data;
+    } catch (error) {
+      console.error("Failed to fetch cart:", error);
+      return { items: [], itemCount: 0, total: 0 };
+    }
+  };
+
+  const refreshCart = async () => {
+    const cartData = await getInCartProducts();
+    setCart(cartData);
   };
 
   useEffect(() => {
-    getInCartProducts()
-      .then((res) => {
-        setCart(res);
-      })
-      .catch((e) => {
-        console.log(e);
-      });
+    if (token) {
+      refreshCart();
+    }
+  }, [token]);
+
+  // Listen for cart updates
+  useEffect(() => {
+    const handleCartUpdate = () => {
+      if (token) {
+        refreshCart();
+      }
+    };
+
+    window.addEventListener("cartUpdated", handleCartUpdate);
+
+    return () => {
+      window.removeEventListener("cartUpdated", handleCartUpdate);
+    };
+  }, [token]);
+
+  useEffect(() => {
     if (open && initialTireId) {
       setSelectedQuantities((prev) => ({
         ...prev,
         [initialTireId]: initialQuantity,
       }));
     }
-  }, [open, initialTireId, initialQuantity, token]);
+  }, [open, initialTireId, initialQuantity]);
 
   useEffect(() => {
     if (!open) {
@@ -275,25 +301,30 @@ export default function TireOrderModal({
     } else {
       onOpenChange(false);
 
-      await axios
-        .post("/api/proxy/api/order/order", formData, {
+      try {
+        await axios.post("/api/proxy/api/order/order", formData, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        })
-        .then(() => {
-          setTimeout(() => {
-            setStep(1);
-
-            setFormData({
-              name: "",
-              phone: "",
-              email: "",
-              region: "",
-              message: "",
-            });
-          }, 300);
         });
+
+        // Clear cart after successful order
+        window.dispatchEvent(new Event("cartUpdated"));
+
+        setTimeout(() => {
+          setStep(1);
+          setFormData({
+            name: "",
+            phone: "",
+            email: "",
+            region: "",
+            message: "",
+          });
+        }, 300);
+      } catch (error) {
+        console.error("Order failed:", error);
+        // Handle error (show toast, etc.)
+      }
     }
   };
 
@@ -343,6 +374,7 @@ export default function TireOrderModal({
               <Button
                 onClick={handleNextStep}
                 className="bg-black text-white hover:bg-gray-800"
+                disabled={cart.items.length === 0}
               >
                 ПРОДОЛЖИТЬ
               </Button>
@@ -358,12 +390,14 @@ export default function TireOrderModal({
                 value={formData.name}
                 onChange={handleInputChange}
                 placeholder="Имя"
+                required
               />
               <Input
                 name="region"
                 value={formData.region}
                 onChange={handleInputChange}
                 placeholder="Регион"
+                required
               />
               <Input
                 name="phone"
@@ -371,6 +405,7 @@ export default function TireOrderModal({
                 onChange={handleInputChange}
                 placeholder="Телефон"
                 type="tel"
+                required
               />
               <Input
                 name="email"
@@ -378,6 +413,7 @@ export default function TireOrderModal({
                 onChange={handleInputChange}
                 placeholder="E-mail"
                 type="email"
+                required
               />
               <Textarea
                 name="message"
@@ -394,6 +430,12 @@ export default function TireOrderModal({
               <Button
                 onClick={handleNextStep}
                 className="bg-black text-white hover:bg-gray-800"
+                disabled={
+                  !formData.name ||
+                  !formData.phone ||
+                  !formData.email ||
+                  !formData.region
+                }
               >
                 ПРОДОЛЖИТЬ
               </Button>
@@ -406,30 +448,27 @@ export default function TireOrderModal({
             <div className="mb-6">
               <h3 className="text-lg font-medium mb-4">Продукты</h3>
               <div className="grid grid-cols-3 gap-4 mb-6">
-                {selectedTires.map(
-                  ({ tire, quantity }) =>
-                    tire && (
-                      <div
-                        key={tire.id}
-                        className="bg-white rounded-xl p-4 shadow-sm border flex flex-col items-center"
-                      >
-                        <div className="w-24 h-24 relative mb-2">
-                          <Image
-                            src={tire.image}
-                            alt={tire.name}
-                            fill
-                            className="object-contain"
-                          />
-                        </div>
-                        <div className="text-xs text-center font-medium mb-1">
-                          {tire.name}
-                        </div>
-                        <div className="text-xs text-center mb-2">
-                          {quantity}шт
-                        </div>
-                      </div>
-                    )
-                )}
+                {cart.items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="bg-white rounded-xl p-4 shadow-sm border flex flex-col items-center"
+                  >
+                    <div className="w-24 h-24 relative mb-2">
+                      <Image
+                        src="/images/tyre1.png" // Use default tire image
+                        alt={item.Tier.size}
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+                    <div className="text-xs text-center font-medium mb-1">
+                      {item.Tier.size}
+                    </div>
+                    <div className="text-xs text-center mb-2">
+                      {item.quantity}шт
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <h3 className="text-lg font-medium mb-4">
@@ -439,22 +478,26 @@ export default function TireOrderModal({
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm mb-2">
-                      {formData.name || "Геннадий"}
+                      {formData.name || "Не указано"}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm mb-2">
-                      {formData.phone || "+79999999999"}
+                      {formData.phone || "Не указано"}
                     </p>
-                    <p className="text-sm">
-                      {formData.email || "gennadiy@mail.ru"}
-                    </p>
+                    <p className="text-sm">{formData.email || "Не указано"}</p>
                   </div>
                 </div>
                 <div className="mt-4">
+                  <p className="text-sm mb-2">Регион</p>
+                  <p className="text-sm mb-2">
+                    {formData.region || "Не указано"}
+                  </p>
                   <p className="text-sm mb-2">Сообщение</p>
                   <div className="border rounded p-4 h-20">
-                    <p className="text-sm">{"Работаете с нас?"}</p>
+                    <p className="text-sm">
+                      {formData.message || "Нет сообщения"}
+                    </p>
                   </div>
                 </div>
               </div>
