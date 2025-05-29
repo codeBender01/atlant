@@ -21,6 +21,13 @@ export interface TyreCard {
   updatedAt: string;
 }
 
+export interface TyreData {
+  limit: number;
+  page: number;
+  tiers: TyreCard[];
+  total: number;
+}
+
 export interface User {
   id: number;
   email: string;

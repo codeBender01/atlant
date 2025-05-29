@@ -19,10 +19,11 @@ export default function TruckTiresPage() {
   const token = useAuth();
 
   const getCatalog = async () => {
+    console.log(token);
     if (!token) return;
     const res = await axios.get<Liked[]>("/api/proxy/api/liked", {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token.token}`,
       },
     });
     return res.data;
@@ -32,7 +33,7 @@ export default function TruckTiresPage() {
     await axios
       .delete(`/api/proxy/api/liked/${id}`, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token.token}`,
         },
       })
       .then(() => {

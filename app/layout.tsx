@@ -37,7 +37,7 @@ export default function RootLayout({
   const { token } = useAuth();
 
   const getInCartProducts = async () => {
-    if (!token) return { items: [] };
+    if (!token) return { items: [], itemCount: 0, total: 0 };
 
     try {
       const res = await axios.get<Cart>("/api/proxy/api/order/cart", {
@@ -48,15 +48,18 @@ export default function RootLayout({
       return res.data;
     } catch (error) {
       console.error("Failed to fetch cart:", error);
-      return { items: [] };
+      return { items: [], itemCount: 0, total: 0 };
     }
   };
 
   const updateCartCount = async () => {
     const cartData = await getInCartProducts();
-    setOrderCount(cartData.items.length);
+    // Use itemCount if available, otherwise use items.length
+    const count = cartData.itemCount || cartData.items.length;
+    setOrderCount(count);
   };
 
+  // Initial cart load when token changes
   useEffect(() => {
     if (token) {
       updateCartCount();
@@ -66,10 +69,16 @@ export default function RootLayout({
   }, [token]);
 
   // Listen for cart updates
-
   useEffect(() => {
-    const handleCartUpdate = () => {
-      setIsModalOpen(true);
+    const handleCartUpdate = async () => {
+      if (token) {
+        await updateCartCount();
+        // Only open modal if there are items in cart
+        const cartData = await getInCartProducts();
+        if (cartData.items.length > 0) {
+          setIsModalOpen(true);
+        }
+      }
     };
 
     window.addEventListener("cartUpdated", handleCartUpdate);
@@ -77,7 +86,14 @@ export default function RootLayout({
     return () => {
       window.removeEventListener("cartUpdated", handleCartUpdate);
     };
-  }, []);
+  }, [token]);
+
+  // Close modal when cart becomes empty
+  useEffect(() => {
+    if (orderCount === 0 && isModalOpen) {
+      setIsModalOpen(false);
+    }
+  }, [orderCount, isModalOpen]);
 
   return (
     <html lang="en">
@@ -87,8 +103,10 @@ export default function RootLayout({
         <Header />
         {children}
         <Footer />
-        <div className="fixed bottom-8 right-8">
-          {orderCount > 0 && (
+
+        {/* Only show button when there are items in cart */}
+        {orderCount > 0 && (
+          <div className="fixed bottom-8 right-8">
             <Button
               className="bg-black hover:bg-gray-800 text-white rounded-full px-8 py-3 font-medium text-lg"
               onClick={() => setIsModalOpen(true)}
@@ -98,13 +116,11 @@ export default function RootLayout({
                 {orderCount}
               </span>
             </Button>
-          )}
+          </div>
+        )}
 
-          <TireOrderModal
-            open={isModalOpen}
-            onOpenChange={() => setIsModalOpen(!isModalOpen)}
-          />
-        </div>
+        <TireOrderModal open={isModalOpen} onOpenChange={setIsModalOpen} />
+
         <ToastProvider />
       </body>
     </html>

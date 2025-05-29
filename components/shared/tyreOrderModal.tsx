@@ -123,23 +123,28 @@ const ProductCard = ({
   setSelectedQuantities,
   image,
   cart,
+  handleRemoveFromCart,
+  refreshCart,
+  token,
 }: {
   tire: TyreCard;
   setSelectedQuantities: React.Dispatch<React.SetStateAction<Cart>>;
   image: string;
   cart: Cart;
+  handleRemoveFromCart: (id: number) => Promise<void>;
+  token: string;
+  refreshCart: () => void;
 }) => {
   // Find the cart item that matches this tire
   const cartItem = cart.items.find((item) => item.tierId === tire.id);
 
-  const updateQuantity = (itemId: number, newQuantity: number) => {
-    console.log(
-      "updateQuantity called with itemId:",
-      itemId,
-      "newQuantity:",
-      newQuantity
-    );
+  const updateQuantity = async (itemId: number, newQuantity: number) => {
+    if (newQuantity === 0 && cartItem) {
+      await handleRemoveFromCart(cartItem?.Tier.id);
+      return;
+    }
 
+    // Update local state immediately for better UX
     setSelectedQuantities((prevCart) => {
       const updatedItems = prevCart.items.map((item) => {
         if (item.id === itemId) {
@@ -169,6 +174,25 @@ const ProductCard = ({
 
       return newCart;
     });
+
+    try {
+      await axios.put(
+        `/api/proxy/api/order/cart/${itemId}`,
+        {
+          quantity: newQuantity,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      window.dispatchEvent(new Event("cartUpdated"));
+    } catch (error) {
+      console.error("Failed to update quantity:", error);
+      refreshCart();
+    }
   };
 
   // If there's no cart item for this tire, don't render the component
@@ -177,10 +201,26 @@ const ProductCard = ({
   }
 
   return (
-    <div className="bg-white rounded-xl p-4 shadow-sm border flex flex-col items-center">
+    <div className="bg-white rounded-xl p-4 shadow-sm border flex flex-col items-center relative">
       <div className="w-24 h-24 relative mb-2">
         <Image src={image} alt={image} fill className="object-contain" />
       </div>
+      <Button
+        onClick={() => handleRemoveFromCart(cartItem.Tier.id)}
+        className=" w-fit rounded-lg py-2 bg-red-700 hover:bg-red-800 text-white absolute right-2"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+        >
+          <path
+            fill="currentColor"
+            d="M7 21q-.825 0-1.412-.587T5 19V6H4V4h5V3h6v1h5v2h-1v13q0 .825-.587 1.413T17 21zM17 6H7v13h10zM9 17h2V8H9zm4 0h2V8h-2zM7 6v13z"
+          />
+        </svg>
+      </Button>
       <div className="text-xs text-center font-medium mb-1">{tire.size}</div>
       <div className="text-xs text-center mb-2">{cartItem.quantity}</div>
       <QuantitySelector
@@ -334,6 +374,30 @@ export default function TireOrderModal({
     }
   };
 
+  const handleRemoveLiked = async (id: number) => {
+    try {
+      await axios.delete(`/api/proxy/api/order/cart/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      // Refresh cart data
+      const updatedCart = await getInCartProducts();
+      setCart(updatedCart);
+
+      // Dispatch cart update event to notify layout
+      window.dispatchEvent(new Event("cartUpdated"));
+
+      // Close modal if cart becomes empty
+      if (updatedCart.items.length === 0) {
+        onOpenChange(false);
+      }
+    } catch (error) {
+      console.error("Failed to remove item from cart:", error);
+    }
+  };
+
   const selectedTires = Object.entries(selectedQuantities)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     .filter(([_, qty]) => qty > 0)
@@ -359,11 +423,14 @@ export default function TireOrderModal({
               {cart &&
                 cart.items.map((tire) => (
                   <ProductCard
+                    handleRemoveFromCart={handleRemoveLiked}
                     key={tire.id}
                     tire={tire.Tier}
                     image={image.src}
                     setSelectedQuantities={setCart}
                     cart={cart}
+                    token={token as string}
+                    refreshCart={refreshCart}
                   />
                 ))}
             </div>

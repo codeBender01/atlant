@@ -10,7 +10,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 
-import { TyreCard as TyreCardType } from "@/app/types";
+import { TyreCard as TyreCardType, TyreData } from "@/app/types";
 
 import { useState, useEffect } from "react";
 
@@ -53,13 +53,13 @@ export default function PopularModels() {
   const [tyres, setTyres] = useState<TyreCardType[]>([]);
 
   const getCatalog = async () => {
-    const res = await axios.get<TyreCardType[]>("/api/proxy/api/tiers/popular");
+    const res = await axios.get<TyreData>("/api/proxy/api/tiers/popular");
     return res.data;
   };
 
   useEffect(() => {
     getCatalog().then((res) => {
-      setTyres(res);
+      setTyres(res.tiers);
     });
   }, []);
 
@@ -69,16 +69,17 @@ export default function PopularModels() {
 
       <Carousel className="w-full" opts={{ slidesToScroll: 1, loop: true }}>
         <CarouselContent className="-ml-1">
-          {tyres.map((model, index) => (
-            <CarouselItem
-              key={index}
-              className="pl-1 md:basis-1/2 lg:basis-1/3"
-            >
-              <div className="p-1">
-                <TyreCard model={model} />
-              </div>
-            </CarouselItem>
-          ))}
+          {tyres &&
+            tyres.map((model, index) => (
+              <CarouselItem
+                key={index}
+                className="pl-1 md:basis-1/2 lg:basis-1/3"
+              >
+                <div className="p-1">
+                  <TyreCard model={model} />
+                </div>
+              </CarouselItem>
+            ))}
         </CarouselContent>
         <CarouselPrevious />
         <CarouselNext />
