@@ -14,7 +14,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   const params = await context.params;
-  console.log(params);
   return handleRequest(request, params, "GET");
 }
 
@@ -35,7 +34,20 @@ async function handleRequest(
 ) {
   try {
     const apiEndpoint = `/${endpoint.join("/")}`;
-    const fullUrl = `${API_BASE_URL}${apiEndpoint}`;
+
+    // ✅ FIXED: Extract and forward query parameters
+    const url = new URL(request.url);
+    const searchParams = url.searchParams.toString();
+    const queryString = searchParams ? `?${searchParams}` : "";
+
+    const fullUrl = `${API_BASE_URL}${apiEndpoint}${queryString}`;
+
+    // 🐛 DEBUG: Log the URLs to verify query parameters are included
+    console.log("=== PROXY DEBUG ===");
+    console.log("Original URL:", request.url);
+    console.log("Query params:", searchParams);
+    console.log("Backend URL:", fullUrl);
+    console.log("==================");
 
     let body = null;
     let contentType = "application/json";
@@ -87,6 +99,9 @@ async function handleRequest(
     }
 
     const data = await response.json();
+
+    // 🐛 DEBUG: Log response data to verify filtering worked
+
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error("Proxy request failed:", error);

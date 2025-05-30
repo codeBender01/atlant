@@ -61,7 +61,7 @@ export default function AuthRegisterPage() {
         Страница регистрации
       </h1>
       <form onSubmit={handleSubmit}>
-        <div className="max-w-8/12 mx-auto space-y-5">
+        <div className="max-w-8/12 md:max-w-3/12 mx-auto space-y-5">
           <Input
             type="email"
             placeholder="email"

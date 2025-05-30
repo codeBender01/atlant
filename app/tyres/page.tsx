@@ -45,24 +45,37 @@ export default function TruckTiresPage() {
     limit: number = 10,
     appliedFilters: Filters = {}
   ) => {
-    // Build query parameters
+    // Build query parameters with proper type conversion
     const params: any = {
       page,
       limit,
     };
 
-    // Add filters to params if they exist and are not "all"
+    // Add filters to params with proper type handling
     Object.entries(appliedFilters).forEach(([key, value]) => {
       if (value && value !== "all") {
-        params[key] = value;
+        if (key === "tread_depth") {
+          // Convert tread_depth to number
+          params[key] = Number(value);
+        } else {
+          params[key] = value;
+        }
       }
     });
 
-    const res = await axios.get<TyreData>("/api/proxy/api/tiers/catalog", {
-      params,
-    });
+    console.log("API Request params:", params); // Debug log
 
-    return res.data.tiers;
+    try {
+      const res = await axios.get<TyreData>("/api/proxy/api/tiers/catalog", {
+        params,
+      });
+
+      console.log("API Response:", res.data); // Debug log
+      return res.data.tiers;
+    } catch (error) {
+      console.error("API Error:", error);
+      throw error;
+    }
   };
 
   const loadTyres = useCallback(
@@ -73,6 +86,7 @@ export default function TruckTiresPage() {
     ) => {
       setLoading(true);
       try {
+        console.log("Loading tyres with filters:", appliedFilters); // Debug log
         const newTyres = await getCatalog(page, 10, appliedFilters);
 
         if (newTyres.length === 0) {
@@ -109,25 +123,46 @@ export default function TruckTiresPage() {
 
   // Reset pagination and reload when filters change
   useEffect(() => {
-    if (Object.keys(filters).length > 0 || currentPage === 1) {
-      setCurrentPage(1);
-      setTyres([]);
-      setHasMore(true);
-      loadTyres(1, true, filters);
-    }
-  }, [filters]);
+    console.log("Filters changed:", filters); // Debug log
+    setCurrentPage(1);
+    setTyres([]);
+    setHasMore(true);
+    loadTyres(1, true, filters);
+  }, [filters, loadTyres]);
 
-  // Handle filter changes
+  // Handle filter changes with proper type conversion
   const handleFilterChange = (filterType: keyof Filters, value: string) => {
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      [filterType]: value === "all" ? undefined : value,
-    }));
+    console.log(`Filter change: ${filterType} = ${value}`); // Debug log
+
+    setFilters((prevFilters) => {
+      const newFilters = { ...prevFilters };
+
+      if (value === "all" || !value) {
+        // Remove the filter
+        delete newFilters[filterType];
+      } else {
+        // Set the filter with proper type
+        if (filterType === "tread_depth") {
+          newFilters[filterType] = Number(value);
+        } else {
+          newFilters[filterType] = value;
+        }
+      }
+
+      return newFilters;
+    });
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Грузовые шины</h1>
+
+      {/* Debug info - remove in production */}
+      <div className="mb-4 p-4 bg-gray-100 rounded text-sm">
+        <strong>Current Filters:</strong> {JSON.stringify(filters)}
+        <br />
+        <strong>Tyres Count:</strong> {tyres.length}
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <FilterSelect
