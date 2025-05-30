@@ -56,12 +56,12 @@ export default function AuthRegisterPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 w-full">
+    <div className="mx-auto px-4 py-8 w-full">
       <h1 className="text-2xl text-center font-semibold mb-5">
         Страница регистрации
       </h1>
       <form onSubmit={handleSubmit}>
-        <div className="max-w-3/12 mx-auto space-y-5">
+        <div className="max-w-8/12 mx-auto space-y-5">
           <Input
             type="email"
             placeholder="email"

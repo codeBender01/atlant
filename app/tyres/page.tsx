@@ -11,11 +11,19 @@ import axios from "axios";
 
 import { useEffect, useState, useCallback, useRef } from "react";
 
+interface Filters {
+  axis?: string;
+  size?: string;
+  speed_index?: string;
+  tread_depth?: number;
+}
+
 export default function TruckTiresPage() {
   const [tyres, setTyres] = useState<TyreCardType[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [filters, setFilters] = useState<Filters>({});
 
   const observer = useRef<IntersectionObserver | null>(null);
   const lastTyreElementRef = useCallback(
@@ -32,21 +40,40 @@ export default function TruckTiresPage() {
     [loading, hasMore]
   );
 
-  const getCatalog = async (page: number = 1, limit: number = 10) => {
-    const res = await axios.get<TyreData>("/api/proxy/api/tiers/catalog", {
-      params: {
-        page,
-        limit,
-      },
+  const getCatalog = async (
+    page: number = 1,
+    limit: number = 10,
+    appliedFilters: Filters = {}
+  ) => {
+    // Build query parameters
+    const params: any = {
+      page,
+      limit,
+    };
+
+    // Add filters to params if they exist and are not "all"
+    Object.entries(appliedFilters).forEach(([key, value]) => {
+      if (value && value !== "all") {
+        params[key] = value;
+      }
     });
+
+    const res = await axios.get<TyreData>("/api/proxy/api/tiers/catalog", {
+      params,
+    });
+
     return res.data.tiers;
   };
 
   const loadTyres = useCallback(
-    async (page: number, isNewSearch: boolean = false) => {
+    async (
+      page: number,
+      isNewSearch: boolean = false,
+      appliedFilters: Filters = {}
+    ) => {
       setLoading(true);
       try {
-        const newTyres = await getCatalog(page, 5);
+        const newTyres = await getCatalog(page, 10, appliedFilters);
 
         if (newTyres.length === 0) {
           setHasMore(false);
@@ -55,7 +82,7 @@ export default function TruckTiresPage() {
             isNewSearch ? newTyres : [...prevTyres, ...newTyres]
           );
           // If we get less than the limit, we've reached the end
-          if (newTyres.length < 5) {
+          if (newTyres.length < 10) {
             setHasMore(false);
           }
         }
@@ -70,22 +97,32 @@ export default function TruckTiresPage() {
 
   // Initial load
   useEffect(() => {
-    loadTyres(1, true);
+    loadTyres(1, true, filters);
   }, [loadTyres]);
 
-  // Load more when page changes
+  // Load more when page changes (with current filters)
   useEffect(() => {
     if (currentPage > 1) {
-      loadTyres(currentPage);
+      loadTyres(currentPage, false, filters);
     }
-  }, [currentPage, loadTyres]);
+  }, [currentPage, loadTyres, filters]);
 
-  // Reset pagination when filters change (you'll need to implement this)
-  const resetPagination = () => {
-    setCurrentPage(1);
-    setTyres([]);
-    setHasMore(true);
-    loadTyres(1, true);
+  // Reset pagination and reload when filters change
+  useEffect(() => {
+    if (Object.keys(filters).length > 0 || currentPage === 1) {
+      setCurrentPage(1);
+      setTyres([]);
+      setHasMore(true);
+      loadTyres(1, true, filters);
+    }
+  }, [filters]);
+
+  // Handle filter changes
+  const handleFilterChange = (filterType: keyof Filters, value: string) => {
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      [filterType]: value === "all" ? undefined : value,
+    }));
   };
 
   return (
@@ -94,47 +131,57 @@ export default function TruckTiresPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <FilterSelect
-          label="Ширина"
-          options={[
-            { label: "Все", value: "all" },
-            { label: "295", value: "295" },
-            { label: "315", value: "315" },
-            { label: "385", value: "385" },
-          ]}
-          onChange={resetPagination} // Add this prop to trigger reset
-        />
-
-        <FilterSelect
-          label="Высота"
-          options={[
-            { label: "Все", value: "all" },
-            { label: "70", value: "70" },
-            { label: "80", value: "80" },
-            { label: "90", value: "90" },
-          ]}
-          onChange={resetPagination}
-        />
-
-        <FilterSelect
-          label="Диаметр"
-          options={[
-            { label: "Все", value: "all" },
-            { label: "R22.5", value: "r22.5" },
-            { label: "R19.5", value: "r19.5" },
-            { label: "R17.5", value: "r17.5" },
-          ]}
-          onChange={resetPagination}
-        />
-
-        <FilterSelect
           label="Ось"
           options={[
             { label: "Все", value: "all" },
-            { label: "Ведущая", value: "drive" },
-            { label: "Рулевая", value: "steer" },
-            { label: "Прицепная", value: "trailer" },
+            { label: "Передняя", value: "front" },
+            { label: "Задняя", value: "rear" },
           ]}
-          onChange={resetPagination}
+          onChange={(value) => handleFilterChange("axis", value)}
+        />
+
+        <FilterSelect
+          label="Размер"
+          options={[
+            { label: "Все", value: "all" },
+            { label: "225/48R15", value: "225/48R15" },
+            { label: "247/52R19", value: "247/52R19" },
+            { label: "204/40R16", value: "204/40R16" },
+            { label: "209/55R17", value: "209/55R17" },
+            { label: "225/45R19", value: "225/45R19" },
+            { label: "207/57R17", value: "207/57R17" },
+            { label: "225/57R18", value: "225/57R18" },
+            { label: "240/64R16", value: "240/64R16" },
+            { label: "196/44R18", value: "196/44R18" },
+          ]}
+          onChange={(value) => handleFilterChange("size", value)}
+        />
+
+        <FilterSelect
+          label="Индекс скорости"
+          options={[
+            { label: "Все", value: "all" },
+            { label: "Y", value: "Y" },
+            { label: "T", value: "T" },
+            { label: "V", value: "V" },
+            { label: "H", value: "H" },
+          ]}
+          onChange={(value) => handleFilterChange("speed_index", value)}
+        />
+
+        <FilterSelect
+          label="Глубина протектора"
+          options={[
+            { label: "Все", value: "all" },
+            { label: "7.0", value: "7" },
+            { label: "7.1", value: "7.1" },
+            { label: "7.2", value: "7.2" },
+            { label: "7.9", value: "7.9" },
+            { label: "8.5", value: "8.5" },
+            { label: "8.7", value: "8.7" },
+            { label: "9.0", value: "9" },
+          ]}
+          onChange={(value) => handleFilterChange("tread_depth", value)}
         />
       </div>
 
@@ -144,12 +191,12 @@ export default function TruckTiresPage() {
             // Add ref to the last element for intersection observer
             if (tyres.length === index + 1) {
               return (
-                <div ref={lastTyreElementRef} key={index}>
+                <div ref={lastTyreElementRef} key={`${tire.id}-${index}`}>
                   <TyreCard model={tire} />
                 </div>
               );
             } else {
-              return <TyreCard key={index} model={tire} />;
+              return <TyreCard key={`${tire.id}-${index}`} model={tire} />;
             }
           })}
       </div>
@@ -164,6 +211,13 @@ export default function TruckTiresPage() {
       {/* No more results indicator */}
       {!hasMore && tyres.length > 0 && (
         <div className="text-center mt-8 text-gray-500">Все шины загружены</div>
+      )}
+
+      {/* No results found */}
+      {!loading && tyres.length === 0 && (
+        <div className="text-center mt-8 text-gray-500">
+          По выбранным фильтрам шины не найдены
+        </div>
       )}
     </div>
   );

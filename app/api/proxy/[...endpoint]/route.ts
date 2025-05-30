@@ -14,6 +14,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   const params = await context.params;
+  console.log(params);
   return handleRequest(request, params, "GET");
 }
 

@@ -33,7 +33,7 @@ export default function TireProductDetail() {
   ]);
 
   const params = useParams();
-  const { token } = useAuth(); // Use destructured token
+  const { token } = useAuth();
   const router = useRouter();
 
   const getOneTier = async () => {
