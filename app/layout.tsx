@@ -73,7 +73,13 @@ export default function RootLayout({
     const handleCartUpdate = async () => {
       if (token) {
         await updateCartCount();
-        // Only open modal if there are items in cart
+      }
+    };
+
+    const handleItemAdded = async () => {
+      if (token) {
+        await updateCartCount();
+        // Only open modal when items are added, not updated
         const cartData = await getInCartProducts();
         if (cartData.items.length > 0) {
           setIsModalOpen(true);
@@ -82,12 +88,13 @@ export default function RootLayout({
     };
 
     window.addEventListener("cartUpdated", handleCartUpdate);
+    window.addEventListener("itemAddedToCart", handleItemAdded);
 
     return () => {
       window.removeEventListener("cartUpdated", handleCartUpdate);
+      window.removeEventListener("itemAddedToCart", handleItemAdded);
     };
   }, [token]);
-
   // Close modal when cart becomes empty
   useEffect(() => {
     if (orderCount === 0 && isModalOpen) {

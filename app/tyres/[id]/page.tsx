@@ -11,6 +11,8 @@ import { toast } from "react-toastify";
 
 import { TyreCard } from "@/app/types";
 
+import { useRouter } from "next/navigation";
+
 import axios from "axios";
 
 import { useAuth } from "@/shared/hooks/useAuth";
@@ -32,6 +34,7 @@ export default function TireProductDetail() {
 
   const params = useParams();
   const { token } = useAuth(); // Use destructured token
+  const router = useRouter();
 
   const getOneTier = async () => {
     const res = await axios.get<TyreCard>(`/api/proxy/api/tiers/${params.id}`);
@@ -130,6 +133,9 @@ export default function TireProductDetail() {
       <div className="mb-8">
         <Button
           variant="ghost"
+          onClick={() => {
+            router.back();
+          }}
           className="flex items-center cursor-pointer text-black hover:bg-gray-100"
         >
           <ChevronLeft className="mr-1 h-4 w-4" />

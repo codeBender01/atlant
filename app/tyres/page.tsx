@@ -165,15 +165,6 @@ export default function TruckTiresPage() {
       {!hasMore && tyres.length > 0 && (
         <div className="text-center mt-8 text-gray-500">Все шины загружены</div>
       )}
-
-      <div className="fixed bottom-8 right-8">
-        <Button className="bg-black hover:bg-gray-800 text-white rounded-full px-6 py-3 font-medium">
-          ЗАЯВКА
-          <Badge className="ml-2 bg-red-600 w-4 h-4 rounded-full p-0 flex items-center justify-center">
-            1
-          </Badge>
-        </Button>
-      </div>
     </div>
   );
 }
