@@ -100,8 +100,6 @@ async function handleRequest(
 
     const data = await response.json();
 
-    // 🐛 DEBUG: Log response data to verify filtering worked
-
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error("Proxy request failed:", error);
