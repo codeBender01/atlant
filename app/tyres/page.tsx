@@ -158,13 +158,8 @@ export default function TruckTiresPage() {
       <h1 className="text-3xl font-bold mb-8">Грузовые шины</h1>
 
       {/* Debug info - remove in production */}
-      <div className="mb-4 p-4 bg-gray-100 rounded text-sm">
-        <strong>Current Filters:</strong> {JSON.stringify(filters)}
-        <br />
-        <strong>Tyres Count:</strong> {tyres.length}
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 w-[90vw] mx-auto">
         <FilterSelect
           label="Ось"
           options={[
